@@ -77,7 +77,7 @@ namespace NntpClientLib
         /// <param name="password">The password.</param>
         public virtual void Connect(string hostName, int port, string userName, string password)
         {
-            Open(hostName, port);
+            base.Connect(hostName, port);
             AuthenticateUser(userName, password);
 
             CheckToSupportedExtensions();
