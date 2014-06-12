@@ -42,7 +42,7 @@ namespace NntpClientLib
     /// </summary>
     public class Rfc977NntpClient : IDisposable
     {
-        internal static readonly Encoding DefaultEncoding = Encoding.GetEncoding("iso-8859-1");
+        public static readonly Encoding DefaultEncoding = Encoding.GetEncoding("iso-8859-1");
 
         internal static IFormatProvider FormatProvider
         {
