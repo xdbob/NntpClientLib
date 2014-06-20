@@ -1,11 +1,15 @@
-using System;
+#region Usings
+
 using System.Collections.Generic;
-using System.Text;
+
+#endregion
 
 namespace NntpClientLib
 {
     public class ArticleHeadersDictionaryEnumerator : IArticleHeaderEnumerator
     {
+        #region Initialisation
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ArticleHeadersDictionaryEnumerator"/> class.
         /// </summary>
@@ -15,7 +19,13 @@ namespace NntpClientLib
             m_dict = dictionary;
         }
 
+        #endregion
+
+        #region Variables Privées
+
         Dictionary<string, List<string>> m_dict;
+
+        #endregion
 
         #region IArticleHeaderEnumerator Members
         /// <summary>

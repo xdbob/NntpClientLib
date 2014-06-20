@@ -1,10 +1,16 @@
+#region Usings
+
 using System;
+
+#endregion
 
 namespace NntpClientLib
 {
     [Serializable]
     public sealed class ArticleResponseIds
     {
+        #region Initialisation
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ArticleResponseIds"/> class.
         /// </summary>
@@ -12,7 +18,17 @@ namespace NntpClientLib
         {
         }
 
+        #endregion
+
+        #region Variables Privées
+
         private int m_articleId;
+        private string m_messageId;
+
+        #endregion
+
+        #region Propriétés
+
         /// <summary>
         /// Gets the article id.
         /// </summary>
@@ -22,7 +38,6 @@ namespace NntpClientLib
             get { return m_articleId; }
         }
 
-        private string m_messageId;
         /// <summary>
         /// Gets the message id.
         /// </summary>
@@ -31,6 +46,10 @@ namespace NntpClientLib
         {
             get { return m_messageId; }
         }
+
+        #endregion
+
+        #region Méthodes
 
         /// <summary>
         /// Returns a <see cref="T:System.String"></see> that represents the current <see cref="T:System.Object"></see>.
@@ -42,6 +61,10 @@ namespace NntpClientLib
         {
             return m_articleId + " " + m_messageId;
         }
+
+        #endregion
+
+        #region Méthodes Statiques
 
         /// <summary>
         /// Parses the specified response.
@@ -72,6 +95,8 @@ namespace NntpClientLib
             }
             return a;
         }
+
+        #endregion
     }
 }
 

@@ -1,5 +1,3 @@
-using System;
-
 namespace NntpClientLib
 {
     public enum TimeZoneOption

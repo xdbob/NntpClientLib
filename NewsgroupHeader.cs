@@ -1,10 +1,16 @@
+#region Usings
+
 using System;
+
+#endregion
 
 namespace NntpClientLib
 {
     [Serializable]
     public sealed class NewsgroupHeader
     {
+        #region Initialisation
+
         /// <summary>
         /// Initializes a new instance of the <see cref="NewsgroupHeader"/> class.
         /// </summary>
@@ -12,7 +18,19 @@ namespace NntpClientLib
         {
         }
 
+        #endregion
+
+        #region Variables Privées
+
         private string m_groupName;
+        private int m_firstArticleId;
+        private int m_lastArticleId;
+        private char m_statusCode;
+
+        #endregion
+
+        #region Propriétés
+
         /// <summary>
         /// Gets the name of the group.
         /// </summary>
@@ -22,7 +40,6 @@ namespace NntpClientLib
             get { return m_groupName; }
         }
 
-        private int m_firstArticleId;
         /// <summary>
         /// Gets the first article id.
         /// </summary>
@@ -32,7 +49,6 @@ namespace NntpClientLib
             get { return m_firstArticleId; }
         }
 
-        private int m_lastArticleId;
         /// <summary>
         /// Gets the last article id.
         /// </summary>
@@ -42,7 +58,6 @@ namespace NntpClientLib
             get { return m_lastArticleId; }
         }
 
-        private char m_statusCode;
         /// <summary>
         /// Gets the status code. This will be indicate whether posting is allowed to this group ("y") or not ("n")
         /// or postings will be forwarded to the newsgroup moderator ("m").
@@ -52,6 +67,10 @@ namespace NntpClientLib
         {
             get { return m_statusCode; }
         }
+
+        #endregion
+
+        #region Méthodes
 
         /// <summary>
         /// Returns a <see cref="T:System.String"></see> that represents the current <see cref="T:System.Object"></see>.
@@ -63,6 +82,10 @@ namespace NntpClientLib
         {
             return GroupName + " " + FirstArticleId + " " + LastArticleId + " " + StatusCode;
         }
+
+        #endregion
+
+        #region Méthodes Statiques
 
         /// <summary>
         /// Parses the specified response.
@@ -89,6 +112,8 @@ namespace NntpClientLib
             h.m_statusCode = ((parts.Length > 3 && parts[3].Length > 0) ? h.m_statusCode = parts[3][0] : 'y');
             return h;
         }
+
+        #endregion
     }
 }
 

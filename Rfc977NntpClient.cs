@@ -1,9 +1,12 @@
+#region Usings
+
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
 using System.Net.Sockets;
 using System.Text;
+
+#endregion
 
 namespace NntpClientLib
 {
@@ -63,7 +66,20 @@ namespace NntpClientLib
             return Convert.ToInt32(argument, CultureInfo);
         }
 
+        #region Variables Privées
+
         private NewsgroupStatistics m_currentGroup;
+        private bool m_postingIsAllowed;
+        private int m_connectionTimeout = -1;
+        private int m_port;
+        private string m_host;
+        NntpProtocolReaderWriter m_nntpStream;
+        private TextWriter m_logger;
+        private TcpClient m_connection;
+
+        #endregion
+
+        #region Propriétés
 
         /// <summary>
         /// Gets a value indicating whether a newgroup is selected.
@@ -85,8 +101,6 @@ namespace NntpClientLib
             get { return m_currentGroup; }
         }
 
-        private bool m_postingIsAllowed;
-
         /// <summary>
         /// Gets or sets a value indicating whether posting is allowed.
         /// </summary>
@@ -96,8 +110,6 @@ namespace NntpClientLib
             get { return m_postingIsAllowed; }
             protected set { m_postingIsAllowed = value; }
         }
-
-        private int m_connectionTimeout = -1;
 
         /// <summary>
         /// Gets or sets the connection timeout.
@@ -109,8 +121,6 @@ namespace NntpClientLib
             set { m_connectionTimeout = value; }
         }
 
-        private int m_port;
-
         /// <summary>
         /// Gets the port.
         /// </summary>
@@ -119,8 +129,6 @@ namespace NntpClientLib
         {
             get { return m_port; }
         }
-
-        private string m_host;
 
         /// <summary>
         /// Gets the host.
@@ -140,14 +148,6 @@ namespace NntpClientLib
             get { return (m_connection != null && m_connection.Connected); }
         }
 
-        NntpProtocolReaderWriter m_nntpStream;
-        internal NntpProtocolReaderWriter NntpReaderWriter
-        {
-            get { return m_nntpStream; }
-            set { m_nntpStream = value; }
-        }
-
-        private TextWriter m_logger;
         public TextWriter ProtocolLogger
         {
             set
@@ -159,6 +159,38 @@ namespace NntpClientLib
                 }
             }
         }
+
+        /// <summary>
+        /// Gets the last NNTP command.
+        /// </summary>
+        /// <value>The last NNTP command.</value>
+        public string LastNntpCommand
+        {
+            get { return (NntpReaderWriter == null ? null : NntpReaderWriter.LastCommand); }
+        }
+
+        /// <summary>
+        /// Gets the last NNTP response.
+        /// </summary>
+        /// <value>The last NNTP response.</value>
+        public string LastNntpResponse
+        {
+            get { return (NntpReaderWriter == null ? null : NntpReaderWriter.LastResponse); }
+        }
+
+        #endregion
+
+        #region Propriétés internes
+
+        internal NntpProtocolReaderWriter NntpReaderWriter
+        {
+            get { return m_nntpStream; }
+            set { m_nntpStream = value; }
+        }
+
+        #endregion
+
+        #region Initialisation
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Rfc977NntpClient"/> class.
@@ -178,7 +210,9 @@ namespace NntpClientLib
         {
         }
 
-        private TcpClient m_connection;
+        #endregion
+
+        #region Méthodes
 
         /// <summary>
         /// Connects using the specified host name.
@@ -214,32 +248,6 @@ namespace NntpClientLib
         }
 
         /// <summary>
-        /// Opens the specified host name.
-        /// </summary>
-        /// <param name="hostName">Name of the host.</param>
-        /// <param name="port">The port.</param>
-        protected virtual void Open(string hostName, int port)
-        {
-            m_host = hostName;
-            m_port = port;
-            if (string.IsNullOrEmpty(hostName))
-            {
-                throw new ArgumentNullException("hostName");
-            }
-
-            m_connection = new TcpClient(hostName, port);
-            NntpReaderWriter = new NntpProtocolReaderWriter(m_connection);
-            if (m_logger != null)
-            {
-                NntpReaderWriter.LogWriter = m_logger;
-            }
-            if (ConnectionTimeout != -1)
-            {
-                m_connection.SendTimeout = m_connection.ReceiveTimeout = ConnectionTimeout;
-            }
-        }
-
-        /// <summary>
         /// Closes this instance.
         /// </summary>
         public virtual void Close()
@@ -270,24 +278,6 @@ namespace NntpClientLib
                 }
                 m_connection = null;
             }
-        }
-
-        /// <summary>
-        /// Gets the last NNTP command.
-        /// </summary>
-        /// <value>The last NNTP command.</value>
-        public string LastNntpCommand
-        {
-            get { return (NntpReaderWriter == null ? null : NntpReaderWriter.LastCommand); }
-        }
-
-        /// <summary>
-        /// Gets the last NNTP response.
-        /// </summary>
-        /// <value>The last NNTP response.</value>
-        public string LastNntpResponse
-        {
-            get { return (NntpReaderWriter == null ? null : NntpReaderWriter.LastResponse); }
         }
 
         /// <summary>
@@ -482,39 +472,6 @@ namespace NntpClientLib
         }
 
         /// <summary>
-        /// Sets the article cursor.
-        /// </summary>
-        /// <param name="direction">The direction.</param>
-        /// <returns></returns>
-        private ArticleResponseIds SetArticleCursor(string direction)
-        {
-            if (direction == null)
-            {
-                throw new ArgumentNullException("direction");
-            }
-            
-            if (!(direction.Equals("LAST", StringComparison.InvariantCultureIgnoreCase) || direction.Equals("NEXT", StringComparison.InvariantCultureIgnoreCase)))
-            {
-                throw new ArgumentException(Resource.ErrorMessage03, "direction");
-            }
-
-            if (!CurrentGroupSelected)
-            {
-                throw new NntpGroupNotSelectedException();
-            }
-
-            ValidateConnectionState();
-
-            NntpReaderWriter.WriteCommand(direction);
-            NntpReaderWriter.ReadResponse();
-            if (NntpReaderWriter.LastResponseCode != Rfc977ResponseCodes.ArticleRetrievedTextSeparate)
-            {
-                throw new NntpResponseException(Resource.ErrorMessage04, NntpReaderWriter.LastResponse);
-            }
-            return ArticleResponseIds.Parse(NntpReaderWriter.LastResponse);
-        }
-
-        /// <summary>
         /// Retrieves the statistics for a current article.
         /// </summary>
         /// <returns></returns>
@@ -543,29 +500,6 @@ namespace NntpClientLib
         {
             ValidateMessageIdArgument(messageId);
             return RetrieveStatisticsCore("STAT " + messageId);
-        }
-
-        /// <summary>
-        /// Retrieves the statistics for an article based on the command.
-        /// </summary>
-        /// <param name="command">The command.</param>
-        /// <returns></returns>
-        protected virtual ArticleResponseIds RetrieveStatisticsCore(string command)
-        {
-            ValidateConnectionState();
-
-            if (!CurrentGroupSelected)
-            {
-                throw new NntpGroupNotSelectedException();
-            }
-
-            NntpReaderWriter.WriteCommand(command);
-            NntpReaderWriter.ReadResponse();
-            if (NntpReaderWriter.LastResponseCode != Rfc977ResponseCodes.ArticleRetrievedTextSeparate)
-            {
-                throw new NntpResponseException(Resource.ErrorMessage05, NntpReaderWriter.LastResponse);
-            }
-            return ArticleResponseIds.Parse(NntpReaderWriter.LastResponse);
         }
 
         /// <summary>
@@ -646,29 +580,6 @@ namespace NntpClientLib
             return RetrieveArticleHeaderCore("HEAD " + messageId);
         }
 
-        /// <summary>
-        /// Retrieves the article header common functionality. The command argument
-        /// should be in the form "HEAD [article-id|message-id]."
-        /// </summary>
-        /// <param name="command">The command.</param>
-        /// <returns></returns>
-        protected ArticleHeadersDictionary RetrieveArticleHeaderCore(string command)
-        {
-            ArticleHeadersDictionary headers = new ArticleHeadersDictionary();
-            foreach (string s in DoArticleCommand(command, Rfc977ResponseCodes.ArticleRetrievedHeadFollows))
-            {
-                if (s.Length == 0)
-                {
-                    break;
-                }
-                else
-                {
-                    headers.AddHeader(s);
-                }
-            }
-            return headers;
-        }
-
         public virtual IEnumerable<string> RetrieveArticleBody()
         {
             return DoArticleCommand("BODY", Rfc977ResponseCodes.ArticleRetrievedBodyFollows);
@@ -726,29 +637,6 @@ namespace NntpClientLib
         {
             ValidateMessageIdArgument(messageId);
             RetrieveArticleCore("ARTICLE " + messageId, header, body);
-        }
-
-        private void RetrieveArticleCore(string command, IArticleHeadersProcessor headers, IArticleBodyProcessor body)
-        {
-            bool readingHeader = true;
-            foreach (string s in DoArticleCommand(command, Rfc977ResponseCodes.ArticleRetrieved))
-            {
-                if (readingHeader)
-                {
-                    if (s.Length == 0)
-                    {
-                        readingHeader = false;
-                    }
-                    else
-                    {
-                        headers.AddHeader(s);
-                    }
-                }
-                else
-                {
-                    body.AddText(s);
-                }
-            }
         }
 
         /// <summary>
@@ -825,6 +713,138 @@ namespace NntpClientLib
             if (NntpReaderWriter.LastResponseCode != Rfc977ResponseCodes.SlaveStatusNoted)
             {
                 throw new NntpResponseException(Resource.ErrorMessage08, NntpReaderWriter.LastResponse);
+            }
+        }
+
+        #endregion
+
+        #region Méthodes Privées
+
+        /// <summary>
+        /// Opens the specified host name.
+        /// </summary>
+        /// <param name="hostName">Name of the host.</param>
+        /// <param name="port">The port.</param>
+        protected virtual void Open(string hostName, int port)
+        {
+            m_host = hostName;
+            m_port = port;
+            if (string.IsNullOrEmpty(hostName))
+            {
+                throw new ArgumentNullException("hostName");
+            }
+
+            m_connection = new TcpClient(hostName, port);
+            NntpReaderWriter = new NntpProtocolReaderWriter(m_connection);
+            if (m_logger != null)
+            {
+                NntpReaderWriter.LogWriter = m_logger;
+            }
+            if (ConnectionTimeout != -1)
+            {
+                m_connection.SendTimeout = m_connection.ReceiveTimeout = ConnectionTimeout;
+            }
+        }
+
+        /// <summary>
+        /// Sets the article cursor.
+        /// </summary>
+        /// <param name="direction">The direction.</param>
+        /// <returns></returns>
+        private ArticleResponseIds SetArticleCursor(string direction)
+        {
+            if (direction == null)
+            {
+                throw new ArgumentNullException("direction");
+            }
+
+            if (!(direction.Equals("LAST", StringComparison.InvariantCultureIgnoreCase) || direction.Equals("NEXT", StringComparison.InvariantCultureIgnoreCase)))
+            {
+                throw new ArgumentException(Resource.ErrorMessage03, "direction");
+            }
+
+            if (!CurrentGroupSelected)
+            {
+                throw new NntpGroupNotSelectedException();
+            }
+
+            ValidateConnectionState();
+
+            NntpReaderWriter.WriteCommand(direction);
+            NntpReaderWriter.ReadResponse();
+            if (NntpReaderWriter.LastResponseCode != Rfc977ResponseCodes.ArticleRetrievedTextSeparate)
+            {
+                throw new NntpResponseException(Resource.ErrorMessage04, NntpReaderWriter.LastResponse);
+            }
+            return ArticleResponseIds.Parse(NntpReaderWriter.LastResponse);
+        }
+
+        /// <summary>
+        /// Retrieves the statistics for an article based on the command.
+        /// </summary>
+        /// <param name="command">The command.</param>
+        /// <returns></returns>
+        protected virtual ArticleResponseIds RetrieveStatisticsCore(string command)
+        {
+            ValidateConnectionState();
+
+            if (!CurrentGroupSelected)
+            {
+                throw new NntpGroupNotSelectedException();
+            }
+
+            NntpReaderWriter.WriteCommand(command);
+            NntpReaderWriter.ReadResponse();
+            if (NntpReaderWriter.LastResponseCode != Rfc977ResponseCodes.ArticleRetrievedTextSeparate)
+            {
+                throw new NntpResponseException(Resource.ErrorMessage05, NntpReaderWriter.LastResponse);
+            }
+            return ArticleResponseIds.Parse(NntpReaderWriter.LastResponse);
+        }
+
+        /// <summary>
+        /// Retrieves the article header common functionality. The command argument
+        /// should be in the form "HEAD [article-id|message-id]."
+        /// </summary>
+        /// <param name="command">The command.</param>
+        /// <returns></returns>
+        protected ArticleHeadersDictionary RetrieveArticleHeaderCore(string command)
+        {
+            ArticleHeadersDictionary headers = new ArticleHeadersDictionary();
+            foreach (string s in DoArticleCommand(command, Rfc977ResponseCodes.ArticleRetrievedHeadFollows))
+            {
+                if (s.Length == 0)
+                {
+                    break;
+                }
+                else
+                {
+                    headers.AddHeader(s);
+                }
+            }
+            return headers;
+        }
+
+        private void RetrieveArticleCore(string command, IArticleHeadersProcessor headers, IArticleBodyProcessor body)
+        {
+            bool readingHeader = true;
+            foreach (string s in DoArticleCommand(command, Rfc977ResponseCodes.ArticleRetrieved))
+            {
+                if (readingHeader)
+                {
+                    if (s.Length == 0)
+                    {
+                        readingHeader = false;
+                    }
+                    else
+                    {
+                        headers.AddHeader(s);
+                    }
+                }
+                else
+                {
+                    body.AddText(s);
+                }
             }
         }
 
@@ -911,19 +931,6 @@ namespace NntpClientLib
             } while (true);
         }
 
-        #region IDisposable Members
-
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
-        void IDisposable.Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        #endregion
-
         /// <summary>
         /// Disposes the specified disposing.
         /// </summary>
@@ -936,6 +943,21 @@ namespace NntpClientLib
                 Close();
             }
         }
+
+        #endregion
+
+        #region IDisposable Members
+
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        void IDisposable.Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        #endregion
     }
 }
 

@@ -1,5 +1,3 @@
-using System;
-
 namespace NntpClientLib
 {
     public interface IArticleBodyProcessor

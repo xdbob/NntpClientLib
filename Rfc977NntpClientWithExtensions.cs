@@ -1,6 +1,9 @@
+#region Usings
+
 using System;
 using System.Collections.Generic;
-using System.IO;
+
+#endregion
 
 namespace NntpClientLib
 {
@@ -8,9 +11,19 @@ namespace NntpClientLib
 
     public class Rfc977NntpClientWithExtensions : Rfc977NntpClient
     {
-        private List<string> m_supportedCommands = new List<string>();
+        #region Variables Privées
 
+        private List<string> m_supportedCommands = new List<string>();
         private bool m_supportsXover;
+        private bool m_supportsListActive;
+        private bool m_supportsXhdr;
+        private bool m_supportsXgtitle;
+        private bool m_supportsXpat;
+
+        #endregion
+
+        #region Propriétés
+
         /// <summary>
         /// Gets a value indicating whether [supports xover].
         /// </summary>
@@ -20,7 +33,6 @@ namespace NntpClientLib
             get { return m_supportsXover; }
         }
 
-        private bool m_supportsListActive;
         /// <summary>
         /// Gets a value indicating whether [supports list active].
         /// </summary>
@@ -30,7 +42,6 @@ namespace NntpClientLib
             get { return m_supportsListActive; }
         }
 
-        private bool m_supportsXhdr;
         /// <summary>
         /// Gets a value indicating whether [supports XHDR].
         /// </summary>
@@ -40,7 +51,6 @@ namespace NntpClientLib
             get { return m_supportsXhdr; }
         }
 
-        private bool m_supportsXgtitle;
         /// <summary>
         /// Gets a value indicating whether [supports xgtitle].
         /// </summary>
@@ -50,12 +60,14 @@ namespace NntpClientLib
             get { return m_supportsXgtitle; }
         }
 
-        private bool m_supportsXpat;
-
         public bool SupportsXpat
         {
             get { return m_supportsXpat; }
         }
+
+        #endregion 
+
+        #region Méthodes
 
         /// <summary>
         /// Connects using the specified host name and port number.
@@ -81,37 +93,6 @@ namespace NntpClientLib
             AuthenticateUser(userName, password);
 
             CheckToSupportedExtensions();
-        }
-
-        /// <summary>
-        /// Checks to supported extensions.
-        /// </summary>
-        private void CheckToSupportedExtensions()
-        {
-            foreach (string hs in RetrieveHelp())
-            {
-                string s = hs.ToLower(System.Globalization.CultureInfo.InvariantCulture);
-                if (s.IndexOf("xover") != -1)
-                {
-                    m_supportsXover = true;
-                }
-                else if (s.IndexOf("list") != -1)
-                {
-                    if (s.IndexOf("active") != -1)
-                    {
-                        m_supportsListActive = true;
-                    }
-                }
-                else if (s.IndexOf("xhdr") != -1)
-                {
-                    m_supportsXhdr = true;
-                }
-                else if (s.IndexOf("xgtitle") != -1)
-                {
-                    m_supportsXgtitle = true;
-                }
-                m_supportedCommands.Add(s);
-            }
         }
 
         /// <summary>
@@ -217,7 +198,7 @@ namespace NntpClientLib
 
             if (m_supportsXover)
             {
-                string[] headerNames = new string[] { "Article-ID", "Subject", "From", "Date", "Message-ID", "Xref", "Bytes", "Lines"};
+                string[] headerNames = new string[] { "Article-ID", "Subject", "From", "Date", "Message-ID", "Xref", "Bytes", "Lines" };
                 foreach (string s in DoArticleCommand("XOVER " + firstArticleId + "-" + lastArticleId, 224))
                 {
                     ArticleHeadersDictionary headers = new ArticleHeadersDictionary();
@@ -294,27 +275,6 @@ namespace NntpClientLib
         public IEnumerable<string> RetrieveSpecificArticleHeaders(string headerLine, int firstArticleId, int lastArticleId)
         {
             return RetrieveSpecificArticleHeaderCore("XHDR " + headerLine + " " + firstArticleId + "-" + lastArticleId);
-        }
-
-        /// <summary>
-        /// Retrieves the specific header. This core method implements the iteration of the XHDR command.
-        /// </summary>
-        /// <param name="command">The command.</param>
-        /// <returns></returns>
-        protected virtual IEnumerable<string> RetrieveSpecificArticleHeaderCore(string command)
-        {
-            if (!m_supportsXhdr)
-            {
-                throw new NotImplementedException();
-            }
-
-            foreach (string s in DoArticleCommand(command, Rfc977ResponseCodes.ArticleRetrievedHeadFollows))
-            {
-                if (!s.StartsWith("(none)"))
-                {
-                    yield return s;
-                }
-            }
         }
 
         /// <summary>
@@ -405,5 +365,63 @@ namespace NntpClientLib
             }
             return DoBasicCommand("XGTITLE " + wildcardMatch, 282);
         }
+
+        #endregion
+
+        #region Méthodes Privées
+
+        /// <summary>
+        /// Checks to supported extensions.
+        /// </summary>
+        private void CheckToSupportedExtensions()
+        {
+            foreach (string hs in RetrieveHelp())
+            {
+                string s = hs.ToLower(System.Globalization.CultureInfo.InvariantCulture);
+                if (s.IndexOf("xover") != -1)
+                {
+                    m_supportsXover = true;
+                }
+                else if (s.IndexOf("list") != -1)
+                {
+                    if (s.IndexOf("active") != -1)
+                    {
+                        m_supportsListActive = true;
+                    }
+                }
+                else if (s.IndexOf("xhdr") != -1)
+                {
+                    m_supportsXhdr = true;
+                }
+                else if (s.IndexOf("xgtitle") != -1)
+                {
+                    m_supportsXgtitle = true;
+                }
+                m_supportedCommands.Add(s);
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the specific header. This core method implements the iteration of the XHDR command.
+        /// </summary>
+        /// <param name="command">The command.</param>
+        /// <returns></returns>
+        protected virtual IEnumerable<string> RetrieveSpecificArticleHeaderCore(string command)
+        {
+            if (!m_supportsXhdr)
+            {
+                throw new NotImplementedException();
+            }
+
+            foreach (string s in DoArticleCommand(command, Rfc977ResponseCodes.ArticleRetrievedHeadFollows))
+            {
+                if (!s.StartsWith("(none)"))
+                {
+                    yield return s;
+                }
+            }
+        }
+
+        #endregion
     }
 }

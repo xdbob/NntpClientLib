@@ -1,7 +1,8 @@
-using System;
-
 namespace NntpClientLib
 {
+    /// <summary>
+    /// Défini les différentes codes de réponse NNTP
+    /// </summary>
     internal sealed class Rfc977ResponseCodes
     {
         public const int HelpTextFollows = 100;

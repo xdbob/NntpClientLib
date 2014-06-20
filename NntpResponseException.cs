@@ -7,6 +7,8 @@ namespace NntpClientLib
     [Serializable]
     public class NntpResponseException : NntpException, ISerializable
     {
+        #region Initialisation
+
         /// <summary>
         /// Initializes a new instance of the <see cref="NntpResponseException"/> class.
         /// </summary>
@@ -42,7 +44,16 @@ namespace NntpClientLib
         {
         }
 
+        #endregion
+
+        #region Variables Privées
+
         private string m_lastResponse;
+
+        #endregion
+
+        #region Propriétés
+
         /// <summary>
         /// Gets the last response.
         /// </summary>
@@ -60,6 +71,8 @@ namespace NntpClientLib
         {
             get { return Convert.ToInt32(m_lastResponse.Substring(0, 3), System.Globalization.CultureInfo.InvariantCulture); }
         }
+
+        #endregion
 
         #region ISerializable Members
 

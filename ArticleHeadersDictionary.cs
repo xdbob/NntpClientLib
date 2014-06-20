@@ -1,14 +1,24 @@
+#region Usings
+
 using System;
 using System.Runtime.Serialization;
 using System.Security.Permissions;
 using System.Collections.Generic;
+
+#endregion
 
 namespace NntpClientLib
 {
     [Serializable]
     public class ArticleHeadersDictionary : Dictionary<string, List<string>>, IArticleHeadersProcessor, ISerializable
     {
+        #region Variables Privées
+
         private string m_lastHeader;
+
+        #endregion
+
+        #region Initialisation
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ArticleHeadersDictionary"/> class.
@@ -32,6 +42,10 @@ namespace NntpClientLib
             m_lastHeader = info.GetString("lastHeader");
         }
 
+        #endregion
+
+        #region Méthodes
+
         /// <summary>
         /// Implements the <see cref="T:System.Runtime.Serialization.ISerializable"></see> interface and returns the data needed to serialize the <see cref="T:System.Collections.Generic.Dictionary`2"></see> instance.
         /// </summary>
@@ -48,6 +62,8 @@ namespace NntpClientLib
             info.AddValue("lastHeader", m_lastHeader);
             base.GetObjectData(info, context);
         }
+
+        #endregion
 
         #region IArticleHeadersProcessor Members
 

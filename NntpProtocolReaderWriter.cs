@@ -1,19 +1,30 @@
+#region Usings
+
 using System;
 using System.IO;
-using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Runtime.InteropServices;
+
+#endregion
 
 namespace NntpClientLib
 {
     internal class NntpProtocolReaderWriter : IDisposable
     {
+        #region Variables Privées
+
         private TcpClient m_connection;
         private NetworkStream m_network;
         private StreamWriter m_writer;
         private NntpStreamReader m_reader;
         private TextWriter m_log;
+        private System.Text.Encoding m_enc = Rfc977NntpClient.DefaultEncoding;
+        private string m_lastResponse;
+        private string m_lastCommand;
+
+        #endregion
+
+        #region Propriétés
 
         public TextWriter LogWriter
         {
@@ -21,43 +32,15 @@ namespace NntpClientLib
             set { m_log = value; }
         }
 
-        private System.Text.Encoding m_enc = Rfc977NntpClient.DefaultEncoding;
+        #endregion
+
+        #region Propriétés internes
+
         internal Encoding DefaultTextEncoding
         {
             get { return m_enc; }
         }
 
-        internal NntpProtocolReaderWriter(TcpClient connection)
-        {
-            m_connection = connection;
-            m_network = m_connection.GetStream();
-            m_writer = new StreamWriter(m_network, DefaultTextEncoding);
-            m_writer.AutoFlush = true;
-            m_reader = new NntpStreamReader(m_network);
-        }
-
-        internal string ReadLine()
-        {
-            string s = m_reader.ReadLine();
-            if (m_log != null)
-            {
-                m_log.Write(">> ");
-                m_log.WriteLine(s);
-            }
-            return s;
-        }
-
-        internal string ReadResponse()
-        {
-            m_lastResponse = m_reader.ReadLine();
-            if (m_log != null)
-            {
-                m_log.WriteLine("< " + m_lastResponse);
-            }
-            return m_lastResponse;
-        }
-
-        private string m_lastResponse;
         internal string LastResponse
         {
             get { return m_lastResponse; }
@@ -79,10 +62,47 @@ namespace NntpClientLib
             }
         }
 
-        private string m_lastCommand;
         internal string LastCommand
         {
             get { return m_lastCommand; }
+        }
+
+        #endregion
+
+        #region Initialisation
+
+        internal NntpProtocolReaderWriter(TcpClient connection)
+        {
+            m_connection = connection;
+            m_network = m_connection.GetStream();
+            m_writer = new StreamWriter(m_network, DefaultTextEncoding);
+            m_writer.AutoFlush = true;
+            m_reader = new NntpStreamReader(m_network);
+        }
+
+        #endregion
+
+        #region Méthodes Internes
+
+        internal string ReadLine()
+        {
+            string s = m_reader.ReadLine();
+            if (m_log != null)
+            {
+                m_log.Write(">> ");
+                m_log.WriteLine(s);
+            }
+            return s;
+        }
+
+        internal string ReadResponse()
+        {
+            m_lastResponse = m_reader.ReadLine();
+            if (m_log != null)
+            {
+                m_log.WriteLine("< " + m_lastResponse);
+            }
+            return m_lastResponse;
         }
 
         internal void WriteCommand(string line)
@@ -112,6 +132,8 @@ namespace NntpClientLib
             }
             m_writer.Write(line);
         }
+
+        #endregion
 
         #region IDisposable Members
 

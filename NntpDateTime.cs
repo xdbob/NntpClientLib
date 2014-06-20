@@ -1,13 +1,17 @@
+#region Usings
+
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Text.RegularExpressions;
+
+#endregion
 
 namespace NntpClientLib
 {
     // http://www.informit.com/guides/content.asp?g=dotnet&seqNum=172&rl=1
     public struct NntpDateTime : IEquatable<NntpDateTime>
     {
+        #region Initialisation
+
         public NntpDateTime(DateTime dt)
         {
             m_dtime = dt;
@@ -20,7 +24,17 @@ namespace NntpClientLib
             m_utcOffset = utcOffset;
         }
 
+        #endregion
+
+        #region Variables Privées
+
         private DateTime m_dtime;
+        private TimeSpan m_utcOffset;
+
+        #endregion
+
+        #region Propriétés
+
         public DateTime UtcTime
         {
             get { return m_dtime; }
@@ -31,11 +45,14 @@ namespace NntpClientLib
             get { return m_dtime + m_utcOffset; }
         }
 
-        private TimeSpan m_utcOffset;
         public TimeSpan UtcOffset
         {
             get { return m_utcOffset; }
         }
+
+        #endregion
+
+        #region Méthodes
 
         public override bool Equals(object obj)
         {
@@ -55,6 +72,31 @@ namespace NntpClientLib
         {
             return m_dtime == other.m_dtime && m_utcOffset == other.m_utcOffset;
         }
+
+        public override string ToString()
+        {
+            return ToString("R");
+        }
+
+        public string ToString(string format)
+        {
+            if (format == null || format == "R")
+            {
+                string f = (m_dtime + m_utcOffset).ToString("ddd, dd MMM yyyy HH:mm:ss ", Rfc977NntpClient.FormatProvider);
+                if (m_utcOffset >= TimeSpan.Zero)
+                {
+                    f += "+";
+                }
+                f += m_utcOffset.Hours.ToString("00", Rfc977NntpClient.FormatProvider) + m_utcOffset.Minutes.ToString("00", Rfc977NntpClient.FormatProvider);
+                f += " (UTC)";
+                return f;
+            }
+            throw new ArgumentException(Resource.ErrorMessage46);
+        }
+
+        #endregion
+
+        #region Méthodes statiques
 
         public static bool operator ==(NntpDateTime d1, NntpDateTime d2)
         {
@@ -140,6 +182,10 @@ namespace NntpClientLib
             }
         }
 
+        #endregion
+
+        #region Méthodes Privées
+
         private static int ParseInt32(string value)
         {
             return int.Parse(value, Rfc977NntpClient.FormatProvider);
@@ -194,25 +240,6 @@ namespace NntpClientLib
             return TimeSpan.FromHours(hours);
         }
 
-        public override string ToString()
-        {
-            return ToString("R");
-        }
-
-        public string ToString(string format)
-        {
-            if (format == null || format == "R")
-            {
-                string f = (m_dtime + m_utcOffset).ToString("ddd, dd MMM yyyy HH:mm:ss ", Rfc977NntpClient.FormatProvider);
-                if (m_utcOffset >= TimeSpan.Zero)
-                {
-                    f += "+";
-                }
-                f += m_utcOffset.Hours.ToString("00", Rfc977NntpClient.FormatProvider) + m_utcOffset.Minutes.ToString("00", Rfc977NntpClient.FormatProvider);
-                f += " (UTC)";
-                return f;
-            }
-            throw new ArgumentException(Resource.ErrorMessage46);
-        }
+        #endregion
     }
 }

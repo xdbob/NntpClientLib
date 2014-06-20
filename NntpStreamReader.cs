@@ -1,17 +1,25 @@
+#region Usings
+
 using System;
 using System.IO;
-using System.Net;
-using System.Net.Sockets;
 using System.Text;
 using System.Runtime.InteropServices;
+
+#endregion
 
 namespace NntpClientLib
 {
     internal class NntpStreamReader : TextReader
     {
+        #region Constantes
+
         const int DefaultBufferSize = 1024;
         const int DefaultFileBufferSize = 4096;
         const int MinimumBufferSize = 512;
+
+        #endregion
+
+        #region Variables
 
         //
         // The input array
@@ -44,6 +52,11 @@ namespace NntpClientLib
         Stream m_baseStream;
         bool m_mayBlock;
         StringBuilder m_lineBuilder;
+        bool foundCR;
+
+        #endregion
+
+        #region Initialisation
 
         private NntpStreamReader() { }
 
@@ -90,6 +103,10 @@ namespace NntpClientLib
             m_currentDecodePosition = 0;
         }
 
+        #endregion
+
+        #region Propriétés
+
         public virtual Stream BaseStream
         {
             get { return m_baseStream; }
@@ -112,30 +129,13 @@ namespace NntpClientLib
             get { return Peek() < 0; }
         }
 
+        #endregion
+
+        #region Méthodes
+
         public override void Close()
         {
             Dispose(true);
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            try
-            {
-                if (disposing && m_baseStream != null)
-                {
-                    m_baseStream.Close();
-                }
-
-                m_inputBuffer = null;
-                m_decodedBuffer = null;
-                m_encoding = null;
-                m_decoder = null;
-                m_baseStream = null;
-            }
-            finally
-            {
-                base.Dispose(disposing);
-            }
         }
 
         public void DiscardBufferedData()
@@ -144,32 +144,7 @@ namespace NntpClientLib
             m_currentDecodePosition = 0;
             m_decodedCount = 0;
             m_mayBlock = false;
-            
-        }
 
-        private int ReadBuffer()
-        {
-            m_currentDecodePosition = 0;
-            int cbEncoded = 0;
-
-            m_decodedCount = 0;
-            int parse_start = 0;
-            do
-            {
-                cbEncoded = m_baseStream.Read(m_inputBuffer, 0, m_bufferSize);
-
-                if (cbEncoded <= 0)
-                {
-                    return 0;
-                }
-
-                m_mayBlock = (cbEncoded < m_bufferSize);
-
-                m_decodedCount += m_decoder.GetChars(m_inputBuffer, parse_start, cbEncoded, m_decodedBuffer, 0);
-                parse_start = 0;
-            } while (m_decodedCount == 0);
-
-            return m_decodedCount;
         }
 
         public override int Peek()
@@ -234,32 +209,6 @@ namespace NntpClientLib
                 charsRead += cch;
             }
             return charsRead;
-        }
-
-        bool foundCR;
-
-        int FindNextEOL()
-        {
-            char c = '\0';
-            for (; m_currentDecodePosition < m_decodedCount; m_currentDecodePosition++)
-            {
-                c = m_decodedBuffer[m_currentDecodePosition];
-                if (c == '\n' && foundCR)
-                {
-                    m_currentDecodePosition++;
-                    int res = (m_currentDecodePosition - 2);
-                    if (res < 0)
-                    {
-                        res = 0; // if a new array starts with a \n and there was a \r at the end of the previous one, we get here.
-                    }
-                    foundCR = false;
-                    return res;
-                }
-
-                foundCR = (c == '\r');
-            }
-
-            return -1;
         }
 
         public override string ReadLine()
@@ -340,6 +289,56 @@ namespace NntpClientLib
             return text.ToString();
         }
 
+        #endregion
+
+        #region Méthodes privées
+
+        protected override void Dispose(bool disposing)
+        {
+            try
+            {
+                if (disposing && m_baseStream != null)
+                {
+                    m_baseStream.Close();
+                }
+
+                m_inputBuffer = null;
+                m_decodedBuffer = null;
+                m_encoding = null;
+                m_decoder = null;
+                m_baseStream = null;
+            }
+            finally
+            {
+                base.Dispose(disposing);
+            }
+        }
+
+        private int ReadBuffer()
+        {
+            m_currentDecodePosition = 0;
+            int cbEncoded = 0;
+
+            m_decodedCount = 0;
+            int parse_start = 0;
+            do
+            {
+                cbEncoded = m_baseStream.Read(m_inputBuffer, 0, m_bufferSize);
+
+                if (cbEncoded <= 0)
+                {
+                    return 0;
+                }
+
+                m_mayBlock = (cbEncoded < m_bufferSize);
+
+                m_decodedCount += m_decoder.GetChars(m_inputBuffer, parse_start, cbEncoded, m_decodedBuffer, 0);
+                parse_start = 0;
+            } while (m_decodedCount == 0);
+
+            return m_decodedCount;
+        }
+
         private void CheckObjectState()
         {
             if (m_baseStream == null)
@@ -347,6 +346,36 @@ namespace NntpClientLib
                 throw new InvalidOperationException(Resource.ErrorMessage45);
             }
         }
+
+        #endregion
+
+        #region Inclassable
+
+        int FindNextEOL()
+        {
+            char c = '\0';
+            for (; m_currentDecodePosition < m_decodedCount; m_currentDecodePosition++)
+            {
+                c = m_decodedBuffer[m_currentDecodePosition];
+                if (c == '\n' && foundCR)
+                {
+                    m_currentDecodePosition++;
+                    int res = (m_currentDecodePosition - 2);
+                    if (res < 0)
+                    {
+                        res = 0; // if a new array starts with a \n and there was a \r at the end of the previous one, we get here.
+                    }
+                    foundCR = false;
+                    return res;
+                }
+
+                foundCR = (c == '\r');
+            }
+
+            return -1;
+        }
+
+        #endregion
     }
 }
 

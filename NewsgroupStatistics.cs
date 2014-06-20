@@ -1,10 +1,16 @@
+#region Usings
+
 using System;
+
+#endregion
 
 namespace NntpClientLib
 {
     [Serializable]
     public sealed class NewsgroupStatistics
     {
+        #region Initialisation
+
         /// <summary>
         /// Initializes a new instance of the <see cref="NewsgroupStatistics"/> class.
         /// </summary>
@@ -20,7 +26,18 @@ namespace NntpClientLib
             m_lastArticleId = lastArticleId;
         }
 
+        #endregion
+
+        #region Variables Privées
+
         private string m_groupName;
+        private int m_estimateCount;
+        private int m_firstArticleId;
+        private int m_lastArticleId;
+
+        #endregion
+
+        #region Propriétés
 
         /// <summary>
         /// Gets the name of the group.
@@ -31,8 +48,6 @@ namespace NntpClientLib
             get { return m_groupName; }
         }
 
-        private int m_estimateCount;
-
         /// <summary>
         /// Gets the estimated article count.
         /// </summary>
@@ -41,8 +56,6 @@ namespace NntpClientLib
         {
             get { return m_estimateCount; }
         }
-
-        private int m_firstArticleId;
 
         /// <summary>
         /// Gets the first article id.
@@ -53,8 +66,6 @@ namespace NntpClientLib
             get { return m_firstArticleId; }
         }
 
-        private int m_lastArticleId;
-
         /// <summary>
         /// Gets the last article id.
         /// </summary>
@@ -64,6 +75,10 @@ namespace NntpClientLib
             get { return m_lastArticleId; }
         }
 
+        #endregion
+
+        #region Méthodes
+
         /// <summary>
         /// Returns a <see cref="T:System.String"></see> that represents the current <see cref="T:System.Object"></see>.
         /// </summary>
@@ -72,8 +87,10 @@ namespace NntpClientLib
         /// </returns>
         public override string ToString()
         {
-            return m_groupName + " " + m_estimateCount + " " + m_firstArticleId + " " + m_lastArticleId; 
+            return m_groupName + " " + m_estimateCount + " " + m_firstArticleId + " " + m_lastArticleId;
         }
+
+        #endregion
     }
 }
 

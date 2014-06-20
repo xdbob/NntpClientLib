@@ -1,5 +1,8 @@
-using System;
+#region Usings
+
 using System.Collections.Generic;
+
+#endregion
 
 namespace NntpClientLib
 {
